@@ -12,6 +12,7 @@ requests = "*"
 beautifulsoup4 = "*"
 ipykernel = "*"
 jupyter = "*"
+selenium = "*"
 
 [requires]
 python_version = "3.7"
