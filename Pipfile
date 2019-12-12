@@ -13,6 +13,7 @@ beautifulsoup4 = "*"
 ipykernel = "*"
 jupyter = "*"
 selenium = "*"
+jupyterlab = "*"
 
 [requires]
 python_version = "3.7"

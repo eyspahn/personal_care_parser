@@ -19,14 +19,16 @@ def scrape_ingredients_list():
     except NoSuchElementException:
         pass
 
-    time.sleep(10)
+    time.sleep(11)
 
     while driver.find_element_by_class_name('next_page').is_displayed():
 
+        next_page_link: str = driver.find_element_by_class_name('next_page').get_attribute('href')
         parse_ingredient_search_page(driver, page_num)
+        time.sleep(11)
         page_num += 1
         # Proceed to next page
-        driver.find_element_by_class_name('next_page').click()
+        driver.get(next_page_link)
 
     # and we'll need to scrape that last page as well
     parse_ingredient_search_page(driver, page_num)
@@ -38,35 +40,49 @@ def scrape_ingredients_list():
 def parse_ingredient_search_page(driver, page_num):
 
     product_tile_num = 0
-    out_filename = 'ingredient_search_page_' + str(page_num) + '.csv'
+    page_tracker_filename = 'search_results_page' + str(page_num) + '.csv'
+    scraped_tracker_filename = 'search_results_scraped' + str(page_num) + '.csv'
 
     # Get the elements with this class - returns a list of webelements
     pt = driver.find_elements_by_class_name('product-tile')
 
+    chemical_links = []
+
     try:
-        # Iterate through all the product-tiles:
+        # Iterate through all the product-tiles & grab the links
         for i in range(len(pt)):
             a_tag = pt[i].find_elements_by_tag_name("a")[1]
             chemical_name = a_tag.text
-            chemical_link = a_tag.get_attribute('href')
-            a_tag.click()
-            scraped = scrape_chemical_page(driver, page_num)
-            driver.back()
-            time.sleep(10)
-            pt = driver.find_elements_by_class_name('product-tile')
-
-            with open(out_filename, 'a+') as f:
+            chemical_link: str = a_tag.get_attribute('href')
+            with open(page_tracker_filename, 'a+') as f:
                 search_page_writer = csv.writer(f)
-                search_page_writer.writerow([datetime.now(), page_num, chemical_name, chemical_link, scraped])
+                search_page_writer.writerow([datetime.now(), page_num, chemical_name, chemical_link])
+
+            chemical_links.append(chemical_link)
+
+        # Yes, we're looping again, to avoid reloading the page
+        for link in chemical_links:
+            driver.get(link)
+            chemical_name, scraped = scrape_chemical_page(driver, page_num)
+
+            with open(scraped_tracker_filename, 'a+') as f:
+                scraped_tracker_writer = csv.writer(f)
+                scraped_tracker_writer.writerow([datetime.now(), page_num, chemical_name, link, scraped])
+
+            # To keep in line with robots.txt
+            time.sleep(11)
+
+
     except:
+
         scraped = False
-        with open(out_filename, 'a+') as f:
-            search_page_writer = csv.writer(f)
-            search_page_writer.writerow(['missed finishing scraping page', '','', '', scraped])
+        with open('errors.txt', 'a+') as f:
+            f.write(f'Errors parsing search results page {page_num}'+'\n')
 
 
 def scrape_chemical_page(driver, search_page_num):
-    """Scrape the ingredient page and record results. Returns True if scrape successful, False otherwise."""
+    """Scrape the ingredient page and record results.
+    Returns True if scrape successful, False otherwise."""
 
     try:
         chemical_name = driver.find_element_by_class_name('chemical-name').text
@@ -114,12 +130,12 @@ def scrape_chemical_page(driver, search_page_num):
                                       'chemical_about': chemical_about,
                                       'chemical_synonyms': chemical_synonyms})
 
-        return True
+        return chemical_name, True
 
     except:
         with open('missed_entries_on_search_page.log', "a+") as f:
             f.write(f"Missed an entry on page: {search_page_num}")
-        return False
+        return 'ERROR', False
 
 
 if __name__ == "__main__":
