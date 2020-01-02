@@ -13,7 +13,12 @@ beautifulsoup4 = "*"
 ipykernel = "*"
 jupyter = "*"
 selenium = "*"
+pillow = "*"
+pytesseract = "*"
+gensim = "*"
 jupyterlab = "*"
+matplotlib = "*"
+ipympl = "*"
 
 [requires]
 python_version = "3.7"
