@@ -19,6 +19,12 @@ gensim = "*"
 jupyterlab = "*"
 matplotlib = "*"
 ipympl = "*"
+fasttext = "*"
+scipy = "*"
+nltk = "*"
+flair = "==0.4.3"
+allennlp = "*"
+wikipedia = "*"
 
 [requires]
 python_version = "3.7"
