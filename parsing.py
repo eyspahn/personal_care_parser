@@ -112,8 +112,9 @@ def get_wiki_phrase(ing: str):
     return wiki_phrase
 
 
-def phrase_to_docvec(phrase: str, doc_embedding):
-    phrase_s = Sentence(phrase.lower(), use_tokenizer=True)  # need to lower, since we're using the uncased version
+def phrase_to_docvec(phrase: str, doc_embedding=doc_embedding):
+    # need to crop the phrase to the first 2000 characters unless I want to look up more things. Should be good enough.
+    phrase_s = Sentence(phrase[:2000].lower(), use_tokenizer=True)  # need to lower, since we're using the uncased version
     doc_embedding.embed(phrase_s)
     phrase_emb_tensor = phrase_s.get_embedding()  # get_embedding() returns a torch.FloatTensor
 
@@ -122,9 +123,9 @@ def phrase_to_docvec(phrase: str, doc_embedding):
 
 def add_to_embedding_dict(ing_name: str, ings_dict: Dict, source: str, doc_vector: np.array):
     if source=='wiki':
-        ings_dict[ing_name]['vector']['wiki'] = doc_vector
+        ings_dict[ing_name].update({'wiki_vector': doc_vector})
     if source=='ewg':
-        ings_dict[ing_name]['vector']['ewg'] = doc_vector
+        ings_dict[ing_name].update({'ewg_vector': doc_vector})
 
     pickle.dump(ings_dict, open('/Volumes/ja2/vegan/vegan_parser/data_source/ingredient_dictionary.p', 'wb'))
 
@@ -159,115 +160,114 @@ def text_only(image_text_string, ings_dict):
         if ing_entry:
             # check if word vectors exist & create if needed, or just get them
 
-            if ings_dict[ing].get('vectors'):
-
-                if not ings_dict[ing]['vectors'].get(['ewg']):
-                    # use the chemical_about phrase to create a document vector
-                    phrase = ings_dict[ing].get(['chemical_about'])
-                    if phrase:
-                        ewg_docvec = phrase_to_docvec(phrase)
-                    else:
-                        ewg_docvec = None
-
-                    ings_dict = add_to_embedding_dict(ing, ings_dict, 'ewg', ewg_docvec)
-                    ings_dict[ing]['vectors']['ewg'] = ewg_docvec
+            if not ings_dict[ing].get(['ewg_vector']):
+                # use the chemical_about phrase to create a document vector
+                phrase = ings_dict[ing].get(['chemical_about'])
+                if phrase:
+                    ewg_docvec = phrase_to_docvec(phrase, doc_embedding)
                 else:
-                    # get the document vector if exists
-                    ewg_docvec: Union[None, np.array] = ings_dict[ing]['vectors'].get(['ewg'])
+                    ewg_docvec = None
 
-                ing_entry['vectors']['ewg'] = ewg_docvec
+                ings_dict = add_to_embedding_dict(ing, ings_dict, 'ewg', ewg_docvec)
+                ings_dict[ing]['ewg_vector'] = ewg_docvec
+            else:
+                # get the document vector if exists
+                ewg_docvec: Union[None, np.array] = ings_dict[ing].get(['ewg_vector'])
 
-                if not ings_dict[ing]['vectors'].get(['wiki']):
-                    # use the wikipedia entry to create a document vector
-                    phrase = get_wiki_phrase(ing)
-                    if phrase:
-                        wiki_docvec = phrase_to_docvec(phrase)
-                    else:
-                        wiki_docvec = None
-                    ings_dict = add_to_embedding_dict(ing, ings_dict, 'wiki', wiki_docvec)
-                    ings_dict[ing]['vectors']['wiki'] = wiki_docvec
+            ing_entry['ewg_vector'] = ewg_docvec
+
+            if not ings_dict[ing].get('wiki_vector'):
+                # use the wikipedia entry to create a document vector
+                phrase = get_wiki_phrase(ing)
+                if phrase:
+                    wiki_docvec = phrase_to_docvec(phrase, doc_embedding)
                 else:
-                    wiki_docvec: Union[None, np.array] = ings_dict[ing]['vectors'].get(['wiki'])
+                    wiki_docvec = None
+                ings_dict = add_to_embedding_dict(ing, ings_dict, 'wiki', wiki_docvec)
+                ings_dict[ing]['wiki_vector'] = wiki_docvec
+            else:
+                wiki_docvec: Union[None, np.array] = ings_dict.get('wiki_vector')
 
-                ing_entry['vectors']['wiki'] = wiki_docvec
+            ing_entry['wiki_vector'] = wiki_docvec
 
             ings_dict_list.append(ing_entry)
 
         # entry does not exist in dict for whatever reason
         else:
-            ings_dict_list.append('DID NOT FIND')
+            # ings_dict_list.append('DID NOT FIND')
+            ings_dict_list.append(None)
 
     # ings_dict_list is ready, now need to combine the data...somehow
-    print(f'ings_dict_list: {ings_dict_list}')
+    # print(f'ings_dict_list: {ings_dict_list}')
 
     return cleaned_ings_list, ings_dict_list
 
-
-def main(fp):
-
-    # define ingredient embedddings file
-    ings_dict_fp = '/Volumes/ja2/vegan/vegan_parser/data_source/ingredient_dictionary.p'
-
-    try:
-        ings_dict = pickle.load(open(ings_dict_fp, "rb"))
-    except FileNotFoundError:
-        "Ingredients data not found!"
-
-    # image to text
-    image_text_string = read_image(fp)
-    cleaned_ings_list = create_ingredients_list(image_text_string)
-
-    # Look up the data and pull out the relevant ingredients.
-    # how should that be stored... list of dictionaries?
-
-    ings_dict_list = []
-
-    for ing in cleaned_ings_list:
-
-        # look up ing in the dict
-        ing_entry: Dict = ings_dict.get(ing)
-
-        # if entry exists
-        if ing_entry:
-            # check if word vectors exist & create if needed, or just get them
-
-            if ings_dict[ing].get('vectors'):
-
-                if not ings_dict[ing]['vectors'].get(['ewg']):
-                    # use the chemical_about phrase to create a document vector
-                    phrase = ings_dict[ing].get(['chemical_about'])
-                    if phrase:
-                        ewg_docvec = phrase_to_docvec(phrase)
-                    else:
-                        ewg_docvec = None
-
-                    ings_dict = add_to_embedding_dict(ing, ings_dict, 'ewg', ewg_docvec)
-                    ings_dict[ing]['vectors']['ewg'] = ewg_docvec
-                else:
-                    # get the document vector if exists
-                    ewg_docvec: Union[None, np.array] = ings_dict[ing]['vectors'].get(['ewg'])
-
-                ing_entry['vectors']['ewg'] = ewg_docvec
-
-                if not ings_dict[ing]['vectors'].get(['wiki']):
-                    # use the wikipedia entry to create a document vector
-                    phrase = get_wiki_phrase(ing)
-                    if phrase:
-                        wiki_docvec = phrase_to_docvec(phrase)
-                    else:
-                        wiki_docvec = None
-                    ings_dict = add_to_embedding_dict(ing, ings_dict, 'wiki', wiki_docvec)
-                    ings_dict[ing]['vectors']['wiki'] = wiki_docvec
-                else:
-                    wiki_docvec: Union[None, np.array] = ings_dict[ing]['vectors'].get(['wiki'])
-
-                ing_entry['vectors']['wiki'] = wiki_docvec
-
-            ings_dict_list.append(ing_entry)
-
-        # entry does not exist in dict for whatever reason
-        else:
-            ings_dict_list.append('DID NOT FIND')
-
-    # ings_dict_list is ready, now need to combine the data...somehow
-    print(ings_dict_list)
+#
+# def main(fp):
+#
+#     # define ingredient embedddings file
+#     ings_dict_fp = '/Volumes/ja2/vegan/vegan_parser/data_source/ingredient_dictionary.p'
+#
+#     try:
+#         ings_dict = pickle.load(open(ings_dict_fp, "rb"))
+#     except FileNotFoundError:
+#         "Ingredients data not found!"
+#
+#     # image to text
+#     image_text_string = read_image(fp)
+#     cleaned_ings_list = create_ingredients_list(image_text_string)
+#
+#     # Look up the data and pull out the relevant ingredients.
+#     # how should that be stored... list of dictionaries?
+#
+#     ings_dict_list = []
+#
+#     for ing in cleaned_ings_list:
+#
+#         # look up ing in the dict
+#         ing_entry: Dict = ings_dict.get(ing)
+#
+#         # if entry exists
+#         if ing_entry:
+#             # check if word vectors exist & create if needed, or just get them
+#
+#             if ings_dict[ing].get('vectors'):
+#
+#                 if not ings_dict[ing]['vectors'].get(['ewg']):
+#                     # use the chemical_about phrase to create a document vector
+#                     phrase = ings_dict[ing].get(['chemical_about'])
+#                     if phrase:
+#                         ewg_docvec = phrase_to_docvec(phrase)
+#                     else:
+#                         ewg_docvec = None
+#
+#                     ings_dict = add_to_embedding_dict(ing, ings_dict, 'ewg', ewg_docvec)
+#                     ings_dict[ing]['vectors']['ewg'] = ewg_docvec
+#                 else:
+#                     # get the document vector if exists
+#                     ewg_docvec: Union[None, np.array] = ings_dict[ing]['vectors'].get(['ewg'])
+#
+#                 ing_entry['vectors']['ewg'] = ewg_docvec
+#
+#                 if not ings_dict[ing]['vectors'].get(['wiki']):
+#                     # use the wikipedia entry to create a document vector
+#                     phrase = get_wiki_phrase(ing)
+#                     if phrase:
+#                         wiki_docvec = phrase_to_docvec(phrase)
+#                     else:
+#                         wiki_docvec = None
+#                     ings_dict = add_to_embedding_dict(ing, ings_dict, 'wiki', wiki_docvec)
+#                     ings_dict[ing]['vectors']['wiki'] = wiki_docvec
+#                 else:
+#                     wiki_docvec: Union[None, np.array] = ings_dict[ing]['vectors'].get(['wiki'])
+#
+#                 ing_entry['vectors']['wiki'] = wiki_docvec
+#
+#             ings_dict_list.append(ing_entry)
+#
+#         # entry does not exist in dict for whatever reason
+#         else:
+#             ings_dict_list.append('DID NOT FIND')
+#
+#     # ings_dict_list is ready, now need to combine the data...somehow
+#     print(ings_dict_list)
