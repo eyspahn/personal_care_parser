@@ -26,6 +26,7 @@ allennlp = "*"
 wikipedia = "*"
 pyenchant = "*"
 fuzzywuzzy = "*"
+networkx = "*"
 
 [requires]
 python_version = "3.7"
