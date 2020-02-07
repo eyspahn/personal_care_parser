@@ -1,13 +1,14 @@
 # Personal Care Ingredients Parser Project
 An effort to develop a system to parse a personal care product's ingredients label and provide both a breakdown of the ingredient souces (vegetable/animal/mineral/water), and the overall safety of the product given the ingredients.
 
+[Link To PyCascades2020 Presentation](https://docs.google.com/presentation/d/1CtZ_pwbr4ZJN-_I4vbKbZxVkb7p0hQ5r8Yn_q25Lnw8/edit?usp=sharing)
+
+I still need to write up a solid README, for now, please refer to the presentation above for info.
+
 ---
 
-References:
-https://www.mariegale.com/quick-labeling-faq/
 
 
------
 
 ## Talk Abstract, Proposed to PyCascades 2020
 Full abstract: Modern skin care and hygiene products, like soaps, lotions, and deodorants, often contain a large number of ingredients with complex names. It's often unclear at a single glance what the source of the ingredients are, and whether they're safe to use. So let's develop a system to parse an ingredient label and provide both a breakdown of the ingredient souces (vegetable/animal/mineral/water), and the overall safety of the product given the ingredients. We'll examine python packages and methods associated with OCR, databases, and webscraping, as well as a discussion of the assumptions and problems in developing these kinds of categorizations. Along the way, we'll discuss the history of cosmetics and personal care ingredients, differences in modern regulations around the world and safety implications, and why only looking at ingredients lists is often not sufficient to understand the full picture of where your modern comfort might originate. All experience levels welcome.
