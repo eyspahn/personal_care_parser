@@ -1,5 +1,5 @@
 # Personal Care Ingredients Parser Project
-An effort to develop a system to parse a personal care product's ingredients label and provide both a breakdown of the ingredient souces (vegetable/animal/mineral/water), and the overall safety of the product given the ingredients.
+An effort to develop a system to parse a personal care product's ingredients label and provide both a breakdown of the ingredient souces (vegetable/animal/mineral/petroleum), and the overall safety of the product given the ingredients.
 
 [Link To PyCascades2020 Presentation](https://docs.google.com/presentation/d/1CtZ_pwbr4ZJN-_I4vbKbZxVkb7p0hQ5r8Yn_q25Lnw8/edit?usp=sharing)
 
