@@ -2,6 +2,7 @@
 An effort to develop a system to parse a personal care product's ingredients label and provide both a breakdown of the ingredient souces (vegetable/animal/mineral/petroleum), and the overall safety of the product given the ingredients.
 
 [Link To PyCascades2020 Presentation](https://docs.google.com/presentation/d/1CtZ_pwbr4ZJN-_I4vbKbZxVkb7p0hQ5r8Yn_q25Lnw8/edit?usp=sharing)
+
 [Link to video of talk](https://youtu.be/2WdjlznbD0o?t=11814)
 
 I still need to write up a solid README, for now, please refer to the presentation above for info.
